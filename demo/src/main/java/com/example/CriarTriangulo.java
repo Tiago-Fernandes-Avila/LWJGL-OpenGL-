@@ -4,8 +4,11 @@ import org.lwjgl.*;
 import java.nio.*;
 import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
+import static org.lwjgl.opengl.GL11.GL_FRONT;
+import static org.lwjgl.opengl.GL11.GL_LINES;
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.glDrawArrays;
+import static org.lwjgl.opengl.GL11.glPolygonMode;
 import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL15.GL_STATIC_DRAW;
 import static org.lwjgl.opengl.GL15.glBindBuffer;
@@ -34,35 +37,47 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 import static org.lwjgl.opengl.GL33.*;
 
 public class CriarTriangulo {
-    private static int vao;
+    private int vao;
+    private int vbo;
+    private int ebo;
+    private float[] vertices;
+    private int[] indices;
 
-    public static void criar() {
+    public CriarTriangulo(float[] vertices, int[] indices) {
+        this.vertices = vertices;
+        this.indices = indices;
+    }
 
-        vao = glGenVertexArrays();
+    public void criar() {
+
+        vao = glGenVertexArrays(); // gera o id do VAO
+        glBindVertexArray(vao); // vincula o VAO para que as configurações sejam salvas nele
 
         // entrada de vertice etapa:
-        float vertices[] = {
-                -0.5f, -0.5f, 0.0f,
-                0.5f, -0.5f, 0.0f,
-                0.0f, 0.5f, 0.0f
-        };
 
         FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(vertices.length);
         vertexBuffer.put(vertices);
         vertexBuffer.flip(); // Important: call flip() to set the buffer's position to 0 and limit to the
                              // current position.
 
-        int vboId = glGenBuffers(); // Generate a buffer ID
-        glBindBuffer(GL_ARRAY_BUFFER, vboId); // Bind it to the GL_ARRAY_BUFFER target
+        vbo = glGenBuffers(); // Generate a buffer ID
+        glBindBuffer(GL_ARRAY_BUFFER, vbo); // Bind it to the GL_ARRAY_BUFFER target
 
         glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
 
+        // configurando o EBO
+        ebo = glGenBuffers();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        IntBuffer indexBuffer = BufferUtils.createIntBuffer(indices.length * Integer.BYTES);
+        indexBuffer.put(indices);
+        indexBuffer.flip();
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
+
+        // Configuração do VAO etapa:
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * Float.BYTES, 0); // como a gpu irá ler os dados do buffer
         glEnableVertexAttribArray(0);
 
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         // shader de vertice etapa:
         String fonteShaderDeVertice = " #version 330 core \n" +
                 "layout(location = 0) in vec3 aPos; \n" +
@@ -82,7 +97,7 @@ public class CriarTriangulo {
         String fonteShaderDerFragmento = "#version 330 core\n" +
                 "out vec4 FragColor; \n" +
                 "void main() {\n" +
-                "    FragColor = vec4(0.0, 0.0, 1.0, 1.0);" +
+                "    FragColor = vec4(1.0, 1.0, 1.0, 1.0);" +
                 "};";
         int shaderDeFragmento = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(shaderDeFragmento, fonteShaderDerFragmento);
@@ -108,10 +123,28 @@ public class CriarTriangulo {
         glDeleteShader(shaderDeFragmento);
 
         glUseProgram(shaderProgram);
-        
 
     }
 
+    public int getVerticesQuantity() {
+        return vertices.length / 3;
+    }
+
+    public int getIndicesQuantity() {
+        return indices.length;
+    }
+
+    public int getVao() {
+        return vao;
+    }
+
+    public int getVbo() {
+        return vbo;
+    }
+
+    public int getEbo() {
+        return ebo;
+    }
 }
 
 // primeiro passo para a pipeline do opengl é criar uma entrada de dados de
@@ -126,13 +159,11 @@ public class CriarTriangulo {
 // paramentros: o tipo do buffer para a memoria que conterá os dados de vertices
 // no caso GL_ARRAY_BUFFER
 // colocamos o buffer do lwjgl que contem um dado que está fora do controle da
-// jvm
+// jvm nesse buffer ele precisa ter o metodo flip() chamado para que o opengl possa ler os dados corretamente. o tamanho em bytes é vertices.length * Float.BYTES e nesse buffer preciso inserir os dados com o put(vertices).
 // Em seguida, uma dica para o OpenGL sobre como o armazenamento de dados será
 // acessado (modificado uma vez, usado várias vezes). Outras opções incluem
 // GL_STREAM_DRAW, GL_DYNAMIC_DRAW, etc.
-
-/*
- * 
+/* 
  * a função original em c do glBindBuffer diz: (target ou seja que tipo de
  * buffer iremos armazenar, o tamanho em bytes, o ponteiro para o array de dados
  * no caso a matriz de vertices e por fim a dica de leitura para a memoria fazer
@@ -149,7 +180,7 @@ public class CriarTriangulo {
  * que processem esses dados; então, vamos começar a construí-lo
  * 
  * Shader de vértices e fragmento:
- * O shader de vértices é um dos shaders programáveis ​​por pessoas como nós. O
+ * O shader de vértices é um dos shaders programáveis. O
  * OpenGL moderno exige que configuremos pelo menos um shader de vértices e um
  * de fragmentos para realizar qualquer renderização
  * para isso vou utilizar a linguagem de shaders de glsl que é uma linguagem
@@ -177,16 +208,49 @@ public class CriarTriangulo {
  * 
  * Etapa de VAO (Vertex Array Object):
  * Bom ainda a gpu não consegue entender como interpretar os dados que vieram do
- * VBO para isso preciso descrever para ela como fazer.
+ * VBO para isso preciso descrever para ela como fazer isso.
  * para isso vou utilizar o glVertexAttribPointer() para indicar coisas como
  * tipagem dos dados, tamanho de cada vertice por exemplo se possuo um vertice
- * de três dimessões cada componente da coordenanda é um float na matrix de
- * vertices, não
- * há um espaço entre os vertices no array. então temos que dizer nessa função
+ * de três dimensões cada componente da coordenanda é um float na matrix de
+ * vertices, não há um espaço entre os vertices no array. então temos que dizer nessa função
  * que cada vetice na matriz corresponde a 3 indices, com 0 de offset entre
  * eles, o tipo, a VBO que vamos usar é a ultima que foi definida para o
  * GL_ARRAY_BUFFER com glBindBuffer e por fim podemos indicar se queremos a
  * normalização dos dados em coordenadas 3d que são interpretadas pela OpenGL
- * (de -1 a 1)
+ * (de -1 a 1) isso é definido por um booleano.
+ * para isso temos o VAO que é um objeto que
+ * armazena todas essas configurações de como a gpu deve interpretar os dados do
+ * VBO.
+ * e configuramos o VAO com o glVertexAttribPointer() e
+ * glEnableVertexAttribArray()
  * 
+ * 
+ * 
+ * Para desenhar os objetos que desejamos, o OpenGL nos fornece...glDrawArrays()
+ * Função que desenha primitivas usando o shader atualmente ativo, a
+ * configuração de atributos de vértice
+ * Os parâmetros principais da glDrawArrays são:
+ * - O tipo de primitiva a ser desenhada (por exemplo, GL_TRIANGLES para
+ * triângulos).
+ * - O índice inicial no array de vértices (geralmente 0 para começar do
+ * início).
+ * - O número de vértices a serem desenhados.
+ * previamente definida e os dados de vértice do VBO (vinculados indiretamente
+ * via VAO).
+ * 
+ * EBO é um tipo especial de buffer que armazena índices que OpenGL usa para
+ * reaproveitar vertices já criados. assim evitando a duplicação de dados.
+ * criamos o EBO com glGenBuffers() e vinculamos ele com
+ * glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo) e usamos o glBufferData para
+ * enviar os dados dos indices.;
+ * 
+ * agora a diferença é que ao invés de usar o glDrawArrays para desenhar os
+ * vertices, usaremos o glDrawElements que utiliza os indices do EBO para
+ * desenhar os vertices reutilizando os dados já existentes.
+ * 
+ * o glDrawElements recebe como parametros: o tipo de primitiva a ser desenhada, 
+ * o número de elementos Ou seja vertices que estão no EBO a serem desenhados, o tipo dos índices e um ponteiro para os índices.
+ * Sempre que você chamar glDrawElements , ele usará o EBO atualmente vinculado ao VAO ativo. que usamos a função glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo); para tal já é automaticamente associado ao VAO. ou seja se vincularmos o VAO novamente o EBO continuará vinculado a ele. 
+ * 
+ * fonte: https://learnopengl.com/Getting-started/Hello-Triangle.
  */

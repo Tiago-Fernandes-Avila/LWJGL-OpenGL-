@@ -10,6 +10,7 @@ import java.nio.*;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL15.glDeleteBuffers;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 import static com.example.CriarTriangulo.*;
@@ -40,7 +41,7 @@ public class HelloWorld {
 		GLFWErrorCallback.createPrint(System.err).set();
 
 		// Initialize GLFW. Most GLFW functions will not work before doing this.
-		if ( !glfwInit() )
+		if (!glfwInit())
 			throw new IllegalStateException("Unable to initialize GLFW");
 
 		// Configure GLFW
@@ -50,17 +51,18 @@ public class HelloWorld {
 
 		// Create the window
 		window = glfwCreateWindow(640, 480, "Hello World!", NULL, NULL);
-		if ( window == NULL )
+		if (window == NULL)
 			throw new RuntimeException("Failed to create the GLFW window");
 
-		// Setup a key callback. It will be called every time a key is pressed, repeated or released.
+		// Setup a key callback. It will be called every time a key is pressed, repeated
+		// or released.
 		glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-			if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
+			if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
 				glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
 		});
 
 		// Get the thread stack and push a new frame
-		try ( MemoryStack stack = stackPush() ) {
+		try (MemoryStack stack = stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1); // int*
 			IntBuffer pHeight = stack.mallocInt(1); // int*
 
@@ -70,7 +72,6 @@ public class HelloWorld {
 			// Get the resolution of the primary monitor
 			GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
-						
 		} // the stack frame is popped automatically
 
 		// Make the OpenGL context current
@@ -91,23 +92,34 @@ public class HelloWorld {
 		GL.createCapabilities();
 
 		// Set the clear color
-		glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+		glClearColor(0.5f, 0.5f, 1.0f, 0.0f);
 
 		// Run the rendering loop until the user has attempted to close
 		// the window or has pressed the ESCAPE key.
-		while ( !glfwWindowShouldClose(window) ) {
+		while (!glfwWindowShouldClose(window)) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
-			
 
-			criar();
-			glDrawArrays(GL_TRIANGLES, 0, 3);
-			
+			CriarTriangulo triangulo = new CriarTriangulo(new float[] {
+					0.5f, 0.5f, 0.0f, // top right
+					0.5f, -0.5f, 0.0f, // bottom right
+					-0.5f, -0.5f, 0.0f, // bottom left
+					-0.5f, 0.5f, 0.0f
+			}, new int[] {
+					0, 1, 3, // first triangle
+					1, 2, 3 // second triangle
+			});
+
+			triangulo.criar();
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			glDrawElements(GL_TRIANGLES, triangulo.getIndicesQuantity(), GL_UNSIGNED_INT, 0);
+
 			glfwSwapBuffers(window); // swap the color buffers
-			
+
 			// Poll for window events. The key callback above will only be
 			// invoked during this call.
 			glfwPollEvents();
 		}
+
 	}
 
 	public static void main(String[] args) {
