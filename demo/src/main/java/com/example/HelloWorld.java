@@ -103,7 +103,7 @@ public class HelloWorld {
 					0.5f, 0.5f, 0.0f, // top right
 					0.5f, -0.5f, 0.0f, // bottom right
 					-0.5f, -0.5f, 0.0f, // bottom left
-					-0.5f, 0.5f, 0.0f
+					-0.5f, 0.5f, 0.0f 
 			}, new int[] {
 					0, 1, 3, // first triangle
 					1, 2, 3 // second triangle
@@ -112,7 +112,6 @@ public class HelloWorld {
 			triangulo.criar();
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			glDrawElements(GL_TRIANGLES, triangulo.getIndicesQuantity(), GL_UNSIGNED_INT, 0);
-
 			glfwSwapBuffers(window); // swap the color buffers
 
 			// Poll for window events. The key callback above will only be
