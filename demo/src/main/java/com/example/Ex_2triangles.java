@@ -47,6 +47,7 @@ import static org.lwjgl.opengl.GL20.glGetShaderi;
 import static org.lwjgl.opengl.GL20.glGetUniformLocation;
 import static org.lwjgl.opengl.GL20.glLinkProgram;
 import static org.lwjgl.opengl.GL20.glShaderSource;
+import static org.lwjgl.opengl.GL20.glUniform1f;
 import static org.lwjgl.opengl.GL20.glUniform4f;
 import static org.lwjgl.opengl.GL20.glUseProgram;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
@@ -60,15 +61,11 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import com.*;
 import com.example.Utils.ReadShader;
+import com.example.Utils.ShaderConfig;
 
 public class Ex_2triangles {
 
-    private final String vertexSrc = ReadShader.read("/home/devtiago/Área de trabalho/Workspace/programas c++/LWJGL-OpenGL-/demo/src/main/java/com/example/shaders/vertexShaders/vertexShader1.glsl");
-
-    private final String fragmentSrc1 = ReadShader.read("/home/devtiago/Área de trabalho/Workspace/programas c++/LWJGL-OpenGL-/demo/src/main/java/com/example/shaders/FragmentShader/fragS1.glsl");
-
-    private final String fragmentSrc2 = ReadShader.read("/home/devtiago/Área de trabalho/Workspace/programas c++/LWJGL-OpenGL-/demo/src/main/java/com/example/shaders/FragmentShader/fragS2.glsl");
-
+    
     private long window;
 
     private int VAO1;
@@ -107,9 +104,13 @@ public class Ex_2triangles {
             glUniform4f(glVertexColorLocation,0.0f, 0.0f, 2 * (float) Math.abs(Math.sin((float)glfwGetTime())) / 2.0f, 1.0f);
             glDrawArrays(GL_TRIANGLES, 0, 3);
 
+            
 
             glBindVertexArray(VAO1);
             glUseProgram(shaderProgram1);
+            int moveUnif = glGetUniformLocation(shaderProgram1, "move");
+            float valor = (float) Math.sin(glfwGetTime());
+            glUniform1f(moveUnif , valor);
             glDrawArrays(GL_TRIANGLES, 0, 3);
 
             glfwPollEvents();
@@ -187,51 +188,14 @@ public class Ex_2triangles {
         glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * Float.BYTES, 3 * Float.BYTES); 
         glEnableVertexAttribArray(1);
 
-        setShaderProgram();
+        this.shaderProgrma2  = ShaderConfig.createShader().setVertexShader("demo/src/main/java/com/example/shaders/vertexShaders/vertexShader1.glsl").setfragmentShader("demo/src/main/java/com/example/shaders/FragmentShader/fragS2.glsl").applyShaderConfig().getProgram();
+
+        this.shaderProgram1 = ShaderConfig.createShader().setVertexShader("/home/devtiago/Área de trabalho/Workspace/programas c++/LWJGL-OpenGL-/demo/src/main/java/com/example/shaders/vertexShaders/vertexShader1.glsl").setfragmentShader("/home/devtiago/Área de trabalho/Workspace/programas c++/LWJGL-OpenGL-/demo/src/main/java/com/example/shaders/FragmentShader/fragSTest.glsl").applyShaderConfig().getProgram();
+        
 
     }
 
-    public void setShaderProgram() {
-        int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, vertexSrc);
-        glCompileShader(vertexShader);
-
-        if (glGetShaderi(vertexShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            throw new RuntimeException("Não foi possivel compilar o shader 1");
-        }
-
-        int fragmentShader1 = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader1, fragmentSrc1);
-        glCompileShader(fragmentShader1);
-
-        int fragmentShader2 = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader2, fragmentSrc2);
-        glCompileShader(fragmentShader2);
-
-        if (glGetShaderi(fragmentShader1, GL_COMPILE_STATUS) == GL_FALSE
-                || glGetShaderi(fragmentShader2, GL_COMPILE_STATUS) == GL_FALSE) {
-            throw new RuntimeException("Não foi possivel compilar o shader 2");
-        }
-
-        shaderProgram1 = glCreateProgram();
-        glAttachShader(shaderProgram1, vertexShader);
-        glAttachShader(shaderProgram1, fragmentShader1);
-        glLinkProgram(shaderProgram1);
-
-        if (glGetProgrami(shaderProgram1, GL_LINK_STATUS) == GL_FALSE) {
-            throw new RuntimeException("Erro ao linkar shader program:\n" + glGetProgramInfoLog(shaderProgram1));
-        }
-
-        shaderProgrma2 = glCreateProgram();
-        glAttachShader(shaderProgrma2, fragmentShader2);
-        glAttachShader(shaderProgrma2, vertexShader);
-        glLinkProgram(shaderProgrma2);
-
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader1);
-        glDeleteShader(fragmentShader2);
-
-    }
+    
 
 }
 

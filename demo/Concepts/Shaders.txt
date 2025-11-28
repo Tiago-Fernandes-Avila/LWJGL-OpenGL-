@@ -26,5 +26,4 @@ recapitulando os parametros do glVertexAttribPointer(temosAPosiçãoDoAtributo, 
 Bom no final criamos um triangulo com cada um de seus vertices tendo um atributo de cor. mas no final obtivemos um degrade de cores entre elas. o que aconteceu foi que na pipeline de renderização, na etapa de rasterização ocasiona em muitos mais fragmentos do que vertices onde ele mapeia para cada pixel na area do triangulo uma cor e para isso acontece uma interpolação de fragmentos onde o resultado é uma variação linear das cores. 
 
 Fonte: https://learnopengl.com/Getting-started/Shaders
-
 */

@@ -1,4 +1,4 @@
-Em algum momento não vamos querer desenhar apenas desenhar um triangulo na tela com um vbo apenas para isso 
+Em algum momento não vamos querer desenhar apenas um triangulo na tela com um vbo apenas para isso 
 eu preciso ter a ideia do glBindBuffer muito bem consolidada. essa ferramenta serve para definir um vbo que será usado e 
 TODO CÓDIGO SUBSEQUENTE SERÁ ALTERADO PARA ESSE VBO! no caso depois de usar essa função poderemos definir a informação dos vertices e o VAO por exemplo. quando formos usar diferentes vbo basta usar o VAO que foi vinculado ao mesmo pois ele irá guardar a referencia ao seu vbo. na renderização seria algo desta maneira:
  
