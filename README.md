@@ -1,1 +1,1 @@
-# LWJGL-OpenGL-
+Learning OpenGL with c++/java

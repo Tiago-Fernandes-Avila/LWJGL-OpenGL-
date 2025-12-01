@@ -1,0 +1,1 @@
+/usr/bin/c++ -rdynamic CMakeFiles/MeuPrograma.dir/src/main.cpp.o CMakeFiles/MeuPrograma.dir/libs/glad/glad.c.o CMakeFiles/MeuPrograma.dir/src/utilities/Shader.cpp.o -o MeuPrograma  libs/glfw/src/libglfw3.a -lGL -lX11 -lXrandr -lXinerama -lXcursor -lXi /usr/lib/x86_64-linux-gnu/librt.a -lm -ldl 
